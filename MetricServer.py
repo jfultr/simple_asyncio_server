@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 
 class SeverError(Exception):
@@ -9,6 +10,7 @@ class SeverError(Exception):
 class ClientServerProtocol(asyncio.Protocol):
     def __init__(self):
         self.transport = None
+        self._store = JsonStoreClass('store.json')
 
     def connection_made(self, transport):
         self.transport = transport
@@ -36,6 +38,15 @@ class ClientServerProtocol(asyncio.Protocol):
 
     def get(self, name):
         pass
+
+
+class JsonStoreClass:
+    def __init__(self, path):
+        self._path = path
+
+    def store(self, data):
+        with open(self._path, 'w') as file:
+            json.dump(data, file)
 
 
 if __name__ == '__main__':
