@@ -40,7 +40,11 @@ class ClientServerProtocol(asyncio.Protocol):
             return 'error\nstore error\n\n'
 
     def get(self, name):
-        pass
+        try:
+            response = self._store.get(name)
+            return response
+        except json.JSONDecodeError:
+            return 'error\nstore error\n\n'
 
 
 class JsonStoreClass:
@@ -48,15 +52,18 @@ class JsonStoreClass:
         self._path = path
 
     def store(self, name, value, timestamp):
-        with open(self._path, '+') as file:
-            for i, line in enumerate(file):
-                line = json.loads(line)
-                if line['name'] == name:
-                    line['payload'].append({'value': value, 'timestamp': timestamp})
-                    file.seek(i)
-                    return
-            line = json.dumps({'name': name, 'payload': [{'value': value, 'timestamp': timestamp}]})
-            file.write(line)
+        with open(self._path, 'r') as file:
+            data = json.load(file)
+            try:
+                print(next(item for item in data['data'] if item["name"] == name))
+            except (StopIteration, AttributeError):
+                data['data'].append({'name': name, 'payload': [{'value': value, 'timestamp': timestamp}]})
+        with open(self._path, 'w') as file:
+            json.dump(data, file)
+
+    def get(self, name):
+        with
+
 
 
 if __name__ == '__main__':
