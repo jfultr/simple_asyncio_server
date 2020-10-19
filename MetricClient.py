@@ -85,8 +85,9 @@ class Client:
 
 if __name__ == '__main__':
     client = Client('127.0.0.1', 8181)
-    client.put('test_key', 18.0, 1)
-    client.put('test_key_2', 664.0, 4)
-    resp = client.get('test_key_2')
+    client.put('test_key', 12.0, 1503319740)
+    client.close()
+    client = Client('127.0.0.1', 8181)
+    resp = client.get('test_key')
     print(resp)
     client.close()
