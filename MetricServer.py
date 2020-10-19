@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 
 
 class ServerError(Exception):
@@ -27,7 +26,8 @@ class ClientServerProtocol(asyncio.Protocol):
             key, value, timestamp = payload.split()
             response = self.put(key, value, timestamp)
         elif command == 'get':
-            response = self.get(payload)
+            key = payload.strip()
+            response = self.get(key)
         else:
             response = 'error\nwrong command\n\n'
         return response
@@ -41,10 +41,18 @@ class ClientServerProtocol(asyncio.Protocol):
 
     def get(self, name):
         try:
-            response = self._store.get(name)
-            return response
+            store = self._store.get(name)
         except json.JSONDecodeError:
             return 'error\nstore error\n\n'
+
+        response = 'ok\n'
+        dict_index = next((i for i, item in enumerate(store['data']) if item["name"] == name))
+        if dict_index is not None:
+            for value in store['data'][dict_index]['payload']:
+                response += f'{name} {value["value"]} {value["timestamp"]}\n'
+        response += '\n'
+        print(response.encode())
+        return response
 
 
 class JsonStoreClass:
@@ -54,16 +62,26 @@ class JsonStoreClass:
     def store(self, name, value, timestamp):
         with open(self._path, 'r') as file:
             data = json.load(file)
-            try:
-                print(next(item for item in data['data'] if item["name"] == name))
-            except (StopIteration, AttributeError):
+
+            dict_index = next((i for i, item in enumerate(data['data']) if item["name"] == name), None)
+            if dict_index is not None:
+                value_index = next(
+                    (i for i, item in enumerate(data['data'][dict_index]['payload']) if item["timestamp"] == timestamp),
+                    None)
+                if value_index is not None:
+                    data['data'][dict_index]['payload'][value_index]['value'] = value
+                else:
+                    data['data'][dict_index]['payload'].append({'value': value, 'timestamp': timestamp})
+            else:
                 data['data'].append({'name': name, 'payload': [{'value': value, 'timestamp': timestamp}]})
+
         with open(self._path, 'w') as file:
             json.dump(data, file)
 
     def get(self, name):
-        with
-
+        with open(self._path, 'r') as file:
+            data = json.load(file)
+        return data
 
 
 if __name__ == '__main__':
